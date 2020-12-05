@@ -1,18 +1,37 @@
-export const createCardTemplate = () => {
+import {MONTH_NAMES} from "../const";
+import {formatTime} from "../mock/utils";
+
+export const createTaskTemplate = (task) => {
+  const {description, dueDate, color, isArchive, isFavorite, repeatingDays} = task;
+
+  const isExpired = dueDate instanceof Date && dueDate < Date.now();
+  const isDateShowing = !!dueDate;
+
+  const isRepeatingTask = Object.values(repeatingDays).some(Boolean);
+
+  const date = isDateShowing ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
+  const time = isDateShowing ? formatTime(dueDate) : ``;
+
+  const repeatClass = isRepeatingTask ? `card--repeat` : ``;
+  const deadlineClass = isExpired ? `card--deadline` : ``;
+
+  const archiveButtonInactiveClass = isArchive ? `` : `card__btn--disabled`;
+  const favoriteButtonInactiveClass = isFavorite ? `` : `card__btn--disabled`;
+
   return `
-    <article class="card card--pink card--repeat">
+    <article class="card card--${color} ${repeatClass} ${deadlineClass}">
       <form class="card__form" method="get">
         <div class="card__inner">
           <div class="card__control">
             <button type="button" class="card__btn card__btn--edit">
               edit
             </button>
-            <button type="button" class="card__btn card__btn--archive">
+            <button type="button" class="card__btn card__btn--archive ${archiveButtonInactiveClass}">
               archive
             </button>
             <button
               type="button"
-              class="card__btn card__btn--favorites card__btn--disabled"
+              class="card__btn card__btn--favorites ${favoriteButtonInactiveClass}"
             >
               favorites
             </button>
@@ -30,8 +49,8 @@ export const createCardTemplate = () => {
                 class="card__text"
                 placeholder="Start typing your text here..."
                 name="text"
-              >
-    It is example of repeating task. It marks by wave.</textarea
+              >${description}
+              </textarea
               >
             </label>
           </div>
@@ -43,25 +62,16 @@ export const createCardTemplate = () => {
                   date: <span class="card__date-status">no</span>
                 </button>
 
-                <fieldset class="card__date-deadline" disabled>
-                  <label class="card__input-deadline-wrap">
-                    <input
-                      class="card__date"
-                      type="text"
-                      placeholder="23 September"
-                      name="date"
-                    />
-                  </label>
-                  <label class="card__input-deadline-wrap">
-                    <input
-                      class="card__time"
-                      type="text"
-                      placeholder="11:15 PM"
-                      name="time"
-                    />
-                  </label>
-                </fieldset>
-
+                ${isDateShowing ? `<fieldset class="card__date-deadline">
+                        <label class="card__input-deadline-wrap">
+                          <input
+                            class="card__date"
+                            type="text"
+                            placeholder="${date} ${time}"
+                            name="date"
+                          />
+                        </label>
+                      </fieldset>` : ``}
                 <button class="card__repeat-toggle" type="button">
                   repeat:<span class="card__repeat-status">no</span>
                 </button>
