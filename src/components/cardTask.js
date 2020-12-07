@@ -1,7 +1,7 @@
 import {MONTH_NAMES} from "../const";
-import {formatTime} from "../mock/utils";
+import {createElement, formatTime} from "../utils";
 
-export const createTaskTemplate = (task) => {
+const createTaskTemplate = (task) => {
   const {description, dueDate, color, isArchive, isFavorite, repeatingDays} = task;
 
   const isExpired = dueDate instanceof Date && dueDate < Date.now();
@@ -18,8 +18,7 @@ export const createTaskTemplate = (task) => {
   const archiveButtonInactiveClass = isArchive ? `` : `card__btn--disabled`;
   const favoriteButtonInactiveClass = isFavorite ? `` : `card__btn--disabled`;
 
-  return `
-    <article class="card card--${color} ${repeatClass} ${deadlineClass}">
+  return `<article class="card card--${color} ${repeatClass} ${deadlineClass}">
       <form class="card__form" method="get">
         <div class="card__inner">
           <div class="card__control">
@@ -301,6 +300,29 @@ export const createTaskTemplate = (task) => {
           </div>
         </div>
       </form>
-    </article>
-  `;
+    </article>`;
 };
+
+export default class Task {
+  constructor(task) {
+    this._task = task;
+
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createTaskTemplate(this._task);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

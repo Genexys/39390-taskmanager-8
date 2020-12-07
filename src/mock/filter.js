@@ -2,7 +2,8 @@ const generateFilters = () => {
   return [
     {
       name: `all`,
-      count: 2
+      count: 2,
+      isChecked: true
     },
     {
       name: `overdue`,
