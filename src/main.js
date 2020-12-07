@@ -1,72 +1,81 @@
-import {createTaskTemplate} from "./components/cardTask";
-import {createTaskEditTemplate} from "./components/cardTaskEdit";
-import {createFilterTemplate} from "./components/filter";
-import {createMenuTemplate} from "./components/menu";
-import {loadMore} from "./components/buttonLoadMore";
-import {search} from "./components/search";
+import BoardTasks from "./components/board";
+import Task from "./components/cardTask";
+import TaskEdit from "./components/cardTaskEdit";
+import SiteMenu from "./components/menuList";
+import Filters from "./components/filter";
+import ButtonLoadMore from "./components/buttonLoadMore";
+import Tasks from "./components/Tasks";
+
 import {generateFilters} from "./mock/filter";
 import {generateTasks} from "./mock/task";
+import {render, RenderPosition} from "./utils";
+
+const ITEM_MENU = [`TASKS`, `ADD NEW TASK`, `STATISTIC`, `SEARCH`];
 
 const TASK_COUNT = 22;
 const SHOWING_COUNT_TASKS_COUNT_ON_START = 8;
 const SHOWING_COUNT_TASKS_COUNT_BY_BUTTON = 8;
 
-const filterContainer = document.querySelector(`.main__filter`);
-const searchContainer = document.querySelector(`.search`);
-const board = document.querySelector(`.board`);
-const boardTasks = document.querySelector(`.board__tasks`);
-const menu = document.querySelector(`.control__btn-wrap`);
+const renderTask = (taskListElement, task) => {
+  const onEditButtonClick = () => {
+    taskListElement.replaceChild(taskEditComponent.getElement(), taskComponent.getElement());
+  };
+
+  const onEditFormSubmit = (evt) => {
+    evt.preventDefault();
+    taskListElement.replaceChild(taskComponent.getElement(), taskEditComponent.getElement());
+  };
+
+  const taskComponent = new Task(task);
+  const editButton = taskComponent.getElement().querySelector(`.card__btn--edit`);
+  editButton.addEventListener(`click`, onEditButtonClick);
+
+  const taskEditComponent = new TaskEdit(task);
+  const editForm = taskEditComponent.getElement().querySelector(`form`);
+  editForm.addEventListener(`click`, onEditFormSubmit);
+
+  render(taskListElement, taskComponent.getElement(), RenderPosition.BEFOREEND);
+};
+
+const renderBoard = (board, tasks) => {
+  render(board.getElement(), new Tasks().getElement(), RenderPosition.BEFOREEND);
+
+  const taskListElement = board.getElement().querySelector(`.board__tasks`);
+
+  let showingTaskCount = SHOWING_COUNT_TASKS_COUNT_ON_START;
+
+  tasks.slice(0, showingTaskCount)
+    .forEach((task) => {
+      renderTask(taskListElement, task);
+    });
+
+  const loadMoreButtonComponent = new ButtonLoadMore();
+  render(board.getElement(), loadMoreButtonComponent.getElement(), RenderPosition.BEFOREEND);
+
+  loadMoreButtonComponent.getElement().addEventListener(`click`, () => {
+    const prevTasksCount = showingTaskCount;
+    showingTaskCount = showingTaskCount + SHOWING_COUNT_TASKS_COUNT_BY_BUTTON;
+
+    tasks.slice(prevTasksCount, showingTaskCount)
+      .forEach((task) => renderTask(taskListElement, task));
+
+    if (showingTaskCount >= tasks.length) {
+      loadMoreButtonComponent.getElement().remove();
+      loadMoreButtonComponent.removeElement();
+    }
+  });
+};
+
+const main = document.querySelector(`.main`);
+const headerElement = document.querySelector(`.main__control`);
+
 
 const filters = generateFilters();
 const tasks = generateTasks(TASK_COUNT);
+const board = new BoardTasks();
 
-const createTaskCards = function (countTask) {
-  boardTasks.insertAdjacentHTML(`beforeend`, createTaskTemplate());
+render(headerElement, new SiteMenu(ITEM_MENU).getElement(), RenderPosition.BEFOREEND);
+render(main, new Filters(filters).getElement(), RenderPosition.BEFOREEND);
 
-  if (countTask > 1) {
-    createTaskCards(countTask - 1);
-  }
-};
-
-menu.insertAdjacentHTML(`beforeend`, createMenuTemplate(`TASKS`));
-menu.insertAdjacentHTML(`beforeend`, createMenuTemplate(`ADD NEW TASK`));
-menu.insertAdjacentHTML(`beforeend`, createMenuTemplate(`STATISTIC`));
-menu.insertAdjacentHTML(`beforeend`, createMenuTemplate(`SEARCH`));
-
-searchContainer.insertAdjacentHTML(`beforeend`, search());
-
-filters.map((it, i) => filterContainer.insertAdjacentHTML(`beforeend`, createFilterTemplate(it.name, it.count, i === 0)));
-
-let showingTasksCount = SHOWING_COUNT_TASKS_COUNT_ON_START;
-
-tasks.forEach((task, i) => {
-  if (i === 0) {
-    boardTasks.insertAdjacentHTML(`beforeend`, createTaskEditTemplate(task));
-  } else {
-    boardTasks.insertAdjacentHTML(`beforeend`, createTaskTemplate(task));
-  }
-});
-
-board.insertAdjacentHTML(`beforeend`, loadMore());
-
-const loadMoreBtn = board.querySelector(`.load-more`);
-
-loadMoreBtn.addEventListener(`click`, () => {
-  const prevTasksCount = showingTasksCount;
-  showingTasksCount = showingTasksCount + SHOWING_COUNT_TASKS_COUNT_BY_BUTTON;
-
-  tasks.slice(prevTasksCount, showingTasksCount).forEach((task) => boardTasks.insertAdjacentHTML(`beforeend`, createTaskTemplate(task)));
-
-  if (showingTasksCount >= tasks.length) {
-    loadMoreBtn.remove();
-  }
-});
-
-// const allFilter = document.querySelectorAll(`.filter__input`);
-//
-// for (const filter of allFilter) {
-//   filter.addEventListener(`click`, function () {
-//     boardTasks.innerHTML = ``;
-//     // generateTasks(Math.floor(Math.random(10) * 10));
-//   });
-// }
+render(main, board.getElement(), RenderPosition.BEFOREEND);
+renderBoard(board, tasks);
